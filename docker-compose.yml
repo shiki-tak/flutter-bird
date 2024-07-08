@@ -1,0 +1,8 @@
+version: '3'
+services:
+  truffle:
+    build: .
+    volumes:
+      - ./flutter_bird_skins:/app/flutter_bird_skins
+      - /app/flutter_bird_skins/node_modules
+

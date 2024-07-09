@@ -136,12 +136,14 @@ In order to use a Flutter Bird Skin in the game you need to mint one first.
 
 
 ## For Klaytn testnet
-- Create .env file in flutter_bird_skins and set PRIVATE_KEY
+- Create .env file in flutter_bird_skins and set PRIVATE_KEY, API_URL
+- API_URL refer to [ChainList](https://chainlist.org/chain/1001).
 
 **./flutter_bird_skins/.env**
 
 ```
 PRIVATE_KEY=XXXXX
+API_URL=https://XXXX
 ```
 
 - Build docker compose

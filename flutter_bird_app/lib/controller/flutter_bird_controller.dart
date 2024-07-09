@@ -2,7 +2,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_bird/controller/authentication_service.dart';
 import 'package:flutter_bird/controller/authorization_service.dart';
 import 'package:flutter_bird/config.dart';
-import 'package:flutter_bird/secrets.dart';
 
 import '../model/account.dart';
 import '../model/skin.dart';
@@ -36,7 +35,8 @@ class FlutterBirdController extends ChangeNotifier {
   init() {
     // Setting Up Web3 Connection
     const String skinContractAddress = flutterBirdSkinsContractAddress;
-    String rpcUrl = alchemyNodeProviderUrl + alchemyApiKey;
+    // String rpcUrl = alchemyNodeProviderUrl + alchemyApiKey;
+    String rpcUrl = klaytnBaobabProviderUrl;
 
     _authenticationService = AuthenticationServiceImpl(
         operatingChain: chainId,

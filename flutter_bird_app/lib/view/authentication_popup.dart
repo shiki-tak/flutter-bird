@@ -184,11 +184,13 @@ class _AuthenticationPopupState extends State<AuthenticationPopup> {
     );
   }
 
-  _buildQRView(String data) => QrImage(
-        data: data,
-        version: QrVersions.auto,
-        size: 200.0,
-      );
+  _buildQRView(String data) {
+    return QrImageView(
+      data: data,
+      version: QrVersions.auto,
+      size: 200.0,
+    );
+  }
 
   _buildBackground() => Positioned.fill(
           child: GestureDetector(

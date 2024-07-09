@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bird/controller/flutter_bird_controller.dart';
 import 'package:flutter_bird/view/main_menu_view.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+
 
 void main() {
+  dotenv.load(fileName: ".env");
   runApp(const MyApp());
 }
 

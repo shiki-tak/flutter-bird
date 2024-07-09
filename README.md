@@ -133,3 +133,67 @@ In order to use a Flutter Bird Skin in the game you need to mint one first.
 6. Click "Write" and confirm and sign the transaction with your wallet.
 
 7. Once the transaction is successful, you have successfully minted a skin that you can use in the Flutter Bird App.
+
+
+## For Klaytn testnet
+- Create .env file in flutter_bird_skins and set PRIVATE_KEY, API_URL
+- API_URL refer to [ChainList](https://chainlist.org/chain/1001).
+
+**./flutter_bird_skins/.env**
+
+```
+PRIVATE_KEY=XXXXX
+API_URL=https://XXXX
+```
+
+- Build docker compose
+```
+% docker-compose up --build
+```
+
+- Open other terminal and Run deploy
+```
+% docker-compose exec truffle sh
+# truffle deploy --network baobab
+
+Compiling your contracts...
+===========================
+✓ Fetching solc version list from solc-bin. Attempt #1
+✓ Downloading compiler. Attempt #1.
+> Everything is up to date, there is nothing to compile.
+
+
+Starting migrations...
+======================
+> Network name:    'baobab'
+> Network id:      1001
+> Block gas limit: 999999999999 (0xe8d4a50fff)
+
+
+1_initial_migration.js
+======================
+
+   Replacing 'FlutterBirdSkins'
+   ----------------------------
+   > transaction hash:    0xcfe48dd339af389ed2dd85e2b94ac53fb64c9874fb2980b7e59e55aa2ec58eb9
+   > Blocks: 0            Seconds: 0
+   > contract address:    0xAca84dc56A05bbC7a335a74d9e13C91dfA2Ea16D
+   > block number:        158855531
+   > block timestamp:     1720436952
+   > account:             0xeB022B68B17Ec89e539C6F5BD740c648c013D9e0
+   > balance:             59.645653649985826146
+   > gas used:            4724618 (0x48178a)
+   > gas price:           25.000000001 gwei
+   > value sent:          0 ETH
+   > total cost:          0.118115450004724618 ETH
+
+   > Saving artifacts
+   -------------------------------------
+   > Total cost:     0.118115450004724618 ETH
+
+Summary
+=======
+> Total deployments:   1
+> Final cost:          0.118115450004724618 ETH
+```
+

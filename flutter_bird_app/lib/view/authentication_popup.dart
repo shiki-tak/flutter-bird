@@ -99,7 +99,7 @@ class _AuthenticationPopupState extends State<AuthenticationPopup> {
       children: [
         Text(
           'Status: $statusText',
-          style: Theme.of(context).textTheme.headline6,
+          style: Theme.of(context).textTheme.titleLarge,
         ),
         if (!flutterBirdController.isOnOperatingChain)
           const SizedBox(
@@ -140,7 +140,7 @@ class _AuthenticationPopupState extends State<AuthenticationPopup> {
           child: Center(
             child: Text(
               web3Service.isAuthenticated ? 'Disconnect' : 'Connect',
-              style: Theme.of(context).textTheme.button?.copyWith(color: Colors.white),
+              style: Theme.of(context).textTheme.labelLarge?.copyWith(color: Colors.white),
             ),
           ),
         ));

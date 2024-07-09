@@ -44,7 +44,7 @@ class Bird extends StatelessWidget {
           Text(
             'loading from\nIPFS...',
             textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.caption,
+            style: Theme.of(context).textTheme.bodySmall,
           )
         ],
       );

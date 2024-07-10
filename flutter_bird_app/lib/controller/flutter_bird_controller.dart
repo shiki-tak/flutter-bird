@@ -35,7 +35,6 @@ class FlutterBirdController extends ChangeNotifier {
   init() {
     // Setting Up Web3 Connection
     const String skinContractAddress = flutterBirdSkinsContractAddress;
-    // String rpcUrl = alchemyNodeProviderUrl + alchemyApiKey;
     String rpcUrl = klaytnBaobabProviderUrl;
 
     _authenticationService = AuthenticationServiceImpl(

@@ -177,7 +177,7 @@ class AuthenticationServiceImpl implements AuthenticationService {
         metadata: const PairingMetadata(
           name: 'Flutter Bird',
           description: 'WalletConnect Developer App',
-          url: 'https://flutterbird.com',
+          url: 'https://flutter-bird.netlify.app',
           icons: [
             'https://raw.githubusercontent.com/Tonnanto/flutter-bird/v1.0/flutter_bird_app/assets/icon.png',
           ],

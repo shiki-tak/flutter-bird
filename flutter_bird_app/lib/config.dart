@@ -1,5 +1,6 @@
-const chainId = 5; // Goerli Testnet
-const flutterBirdSkinsContractAddress = '0x387f544E4c3B2351d015dF57c30831Ad58D6C798';
-const ipfsGatewayUrl = 'https://nftstorage.link/ipfs/';
+const chainId = 1001; // Klaytn Testnet baobab
+const flutterBirdSkinsContractAddress = '0xAca84dc56A05bbC7a335a74d9e13C91dfA2Ea16D';
+const ipfsGatewayUrl = 'https://nftstorage.link/ipfs/'; //FIXME: 
 const alchemyNodeProviderUrl = 'https://eth-goerli.g.alchemy.com/v2/';
 const walletConnectBridge = 'https://bridge.walletconnect.org';
+const klaytnBaobabProviderUrl = 'https://public-en-baobab.klaytn.net';

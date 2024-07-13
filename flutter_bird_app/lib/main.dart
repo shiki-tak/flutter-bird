@@ -1,30 +1,51 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_bird/controller/flutter_bird_controller.dart';
 import 'package:flutter_bird/view/main_menu_view.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:flutter_line_liff/flutter_line_liff.dart';
 
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+   if (const String.fromEnvironment('FLUTTER_ENV') != 'production') {
+    await dotenv.load(fileName: ".env");
+  } 
 
-void main() {
-  dotenv.load(fileName: ".env");
-  runApp(const MyApp());
+  print("Starting application...");
+  const String liffId = String.fromEnvironment('LIFF_ID');
+    
+  final String? os = FlutterLineLiff().os;
+  final bool isInClient = FlutterLineLiff().isInClient;
+  runApp(MyApp(isInClient: isInClient));
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({Key? key}) : super(key: key);
+  final bool isInClient;
 
-  // This widget is the root of your application.
+  const MyApp({Key? key, required this.isInClient}) : super(key: key);
+
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (BuildContext context) => FlutterBirdController()..init(),
+      create: (BuildContext context) {
+        return FlutterBirdController()..init(isInClient);
+      },
       child: MaterialApp(
         title: 'Flutter Bird',
         theme: ThemeData(
           primarySwatch: Colors.blue,
         ),
-        home: const MainMenuView(title: 'Flutter Bird'),
+        home: Builder(
+          builder: (context) {
+            return MainMenuView(
+              title: 'Flutter Bird',
+              isInLiff: isInClient,
+            );
+          },
+        ),
       ),
     );
   }
 }
+

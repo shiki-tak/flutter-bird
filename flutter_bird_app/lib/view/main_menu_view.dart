@@ -15,9 +15,10 @@ import 'widgets/bird.dart';
 import 'widgets/flappy_text.dart';
 
 class MainMenuView extends StatefulWidget {
-  const MainMenuView({Key? key, required this.title}) : super(key: key);
-
   final String title;
+  final bool isInLiff;
+
+  const MainMenuView({Key? key, required this.title, required this.isInLiff}) : super(key: key);
 
   @override
   State<MainMenuView> createState() => _MainMenuViewState();
@@ -75,6 +76,7 @@ class _MainMenuViewState extends State<MainMenuView> with AutomaticKeepAliveClie
     worldDimensions = Size(min(maxWidth, screenDimensions.width), screenDimensions.height * 3 / 4);
     birdSize = worldDimensions.height / 8;
 
+    try {
     return Scaffold(
       body: Consumer<FlutterBirdController>(builder: (context, web3Service, child) {
         web3Service.authorizeUser();
@@ -104,6 +106,16 @@ class _MainMenuViewState extends State<MainMenuView> with AutomaticKeepAliveClie
         );
       }),
     );
+    } catch(e, stackTrace) {
+      print("Error in MainMenuView: $e");
+      print("StackTrace: $stackTrace");
+      return Scaffold(
+        body: Center(
+          child: Text("An error occurred. Please try again."),
+        ),
+      );
+    }
+
   }
 
   Widget _buildMenu(FlutterBirdController web3Service) => Column(
@@ -317,7 +329,7 @@ class _MainMenuViewState extends State<MainMenuView> with AutomaticKeepAliveClie
     Navigator.of(context).push(PageRouteBuilder(
       opaque: false,
       pageBuilder: (BuildContext context, Animation<double> animation, Animation<double> secondaryAnimation) {
-        return const AuthenticationPopup();
+        return AuthenticationPopup(isInLiff: widget.isInLiff);
       },
       transitionDuration: const Duration(milliseconds: 150),
       transitionsBuilder: (context, animation, secondaryAnimation, child) {

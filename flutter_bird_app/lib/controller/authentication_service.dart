@@ -5,17 +5,17 @@ import 'dart:math' as math;
 
 import 'package:eth_sig_util/eth_sig_util.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'package:nonce/nonce.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:walletconnect_flutter_v2/walletconnect_flutter_v2.dart';
 
-import '../../model/account.dart';
-import '../../model/wallet_provider.dart';
+import '../model/account.dart';
+import '../model/wallet_provider.dart';
 
-/// Manages the authentication process and communication with crypto wallets
 abstract class AuthenticationService {
+  Future<void> initialize(bool isInLiff);
+
   List<WalletProvider> get availableWallets;
 
   Account? get authenticatedAccount;
@@ -26,69 +26,117 @@ abstract class AuthenticationService {
 
   bool get isAuthenticated;
 
+  bool get isConnected;
+
   String? get webQrData;
 
-  requestAuthentication({WalletProvider? walletProvider});
-
-  unauthenticate();
+  WalletProvider? get lastUsedWallet;
+  Future<void> requestAuthentication({WalletProvider? walletProvider});
+  Future<void> unauthenticate();
 }
 
 class AuthenticationServiceImpl implements AuthenticationService {
-  @override
-  late final List<WalletProvider> availableWallets;
-
+  final bool isInLiff;
   final int operatingChain;
+  final Function() onAuthStatusChanged;
+  WalletProvider? _lastUsedWallet;
+
+  static const String projectId = String.fromEnvironment('WALLET_CONNECT_PROJECT_ID');
+
+  AuthenticationServiceImpl({
+    required this.isInLiff,
+    required this.operatingChain,
+    required this.onAuthStatusChanged,
+  });
+
+  List<WalletProvider> _availableWallets = [];
   Web3App? _connector;
-  Function() onAuthStatusChanged;
+  bool _isInitialized = false;
 
   @override
-  String get operatingChainName => operatingChain == 1001 ? 'Klaytn Testnet' : 'Chain $operatingChain';
+  List<WalletProvider> get availableWallets => _availableWallets;
 
   @override
   Account? get authenticatedAccount => _authenticatedAccount;
   Account? _authenticatedAccount;
 
   @override
+  String get operatingChainName => operatingChain == 1001 ? 'Klaytn Testnet' : 'Chain $operatingChain';
+
+  @override
   bool get isOnOperatingChain => currentChain == operatingChain;
-
-  SessionData? get currentSession => _connector?.sessions.getAll().firstOrNull;
-
-  int? get currentChain => int.tryParse(currentSession?.namespaces['eip155']?.accounts.first.split(':')[1] ?? '');
 
   @override
   bool get isAuthenticated => isConnected && authenticatedAccount != null;
 
+  @override
+  String? get webQrData => _webQrData;
+  String? _webQrData;
+
+  WalletProvider? get lastUsedWallet => _lastUsedWallet;
+
+  SessionData? get currentSession => _connector?.sessions.getAll().firstOrNull;
   bool get isConnected => currentSession != null;
 
-  // The data to display in a QR Code for connections on Desktop / Browser.
-  @override
-  String? webQrData;
+  int? get currentChain => int.tryParse(currentSession?.namespaces['eip155']?.accounts.first.split(':')[1] ?? '');
 
-  AuthenticationServiceImpl({
-    required this.operatingChain,
-    required this.onAuthStatusChanged,
-  }) {
-    if (kIsWeb) {
-      requestAuthentication();
+  @override
+  Future<void> initialize(bool isInLiff) async {
+    if (_isInitialized) {
+      return;
+    }
+    
+    await _createConnector();
+    await _clearSessions();
+
+    if (!kIsWeb || isInLiff) {
+      await _loadWallets();
     } else {
-      _loadWallets();
+      print('AuthenticationServiceImpl: Skipping wallet loading for Web');
+    }
+    
+    _isInitialized = true;
+  }
+
+  // Update to support WalletConnect v2
+  Future<void> _loadWallets() async {
+    try {
+      final response = await http.get(
+        Uri.parse('https://explorer-api.walletconnect.com/v3/wallets?projectId=${projectId}&entries=5&page=1'),
+        headers: {'Accept': 'application/json'},
+      );
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> responseData = json.decode(response.body);
+        final Map<String, dynamic> walletsData = responseData['listings'];
+
+        _availableWallets = walletsData.entries.map<WalletProvider?>((entry) {
+          try {
+            return WalletProvider.fromJson(entry.value);
+          } catch (e, stackTrace) {
+            print('Error creating WalletProvider from data: ${entry.value}');
+            print('Error: $e');
+            print('Stack trace: $stackTrace');
+            return null;
+          }
+        }).where((wallet) => wallet != null).cast<WalletProvider>().toList();
+
+      } else {
+        throw Exception('Failed to load wallets: ${response.statusCode}');
+      }
+    } catch (e) {
+      log('Error loading wallets: $e');
     }
   }
 
-  /// Loads all WalletConnect compatible wallets
-  _loadWallets() async {
-    final walletResponse = await http.get(Uri.parse('https://registry.walletconnect.org/data/wallets.json'));
-    final walletData = json.decode(walletResponse.body);
-    availableWallets = walletData.entries.map<WalletProvider>((data) => WalletProvider.fromJson(data.value)).toList();
-  }
-
-  /// Prompts user to authenticate with a wallet
   @override
-  requestAuthentication({WalletProvider? walletProvider}) async {
+  Future<void> requestAuthentication({WalletProvider? walletProvider}) async {
+    await _updateConnectionStatus();
     // Create fresh connector
     await _createConnector(walletProvider: walletProvider);
 
-    // Create a new session
+    _lastUsedWallet = walletProvider;
+
     if (!isConnected) {
       try {
         ConnectResponse resp = await _connector!.connect(
@@ -103,14 +151,20 @@ class AuthenticationServiceImpl implements AuthenticationService {
 
         Uri? uri = resp.uri;
         if (uri != null) {
-          if (kIsWeb) {
-            webQrData = uri.toString();
+          // Web
+          if (kIsWeb && !isInLiff) {
+            _webQrData = uri.toString();
             onAuthStatusChanged();
+          // LIFF
+          } else if(kIsWeb && isInLiff) {
+            _launchWallet(wallet: walletProvider, uri: uri.toString());
+          // Native
           } else {
             _launchWallet(wallet: walletProvider, uri: uri.toString());
           }
         }
 
+        await resp.session.future;
         onAuthStatusChanged();
       } catch (e) {
         log('Error during connect: $e', name: 'AuthenticationService');
@@ -118,22 +172,49 @@ class AuthenticationServiceImpl implements AuthenticationService {
     }
   }
 
-  /// Send request to the users wallet to sign a message
-  /// User will be authenticated if the signature could be verified
+  // Since the LIFF browser does not automatically transition to the wallet
+  // after connecting to the wallet, execute verifySignature() directly.
+  Future<bool> verifySignature() async {
+    if (currentChain == null || !isOnOperatingChain) return false;
+
+    String? address = currentSession?.namespaces['eip155']?.accounts.first.split(':').last;
+    if (address == null) return false;
+
+    return _verifySignature(walletProvider: _lastUsedWallet, address: address);
+  }
+  
+  // To maintain consistency during testing, delete the session before opening the app each time.
+  // These(_clearSessions, _updateConnectionStatus) may not be necessary for user convenience.
+  Future<void> _clearSessions() async {
+    if (_connector != null) {
+      final sessions = _connector!.sessions.getAll();
+      for (var session in sessions) {
+        await _connector!.disconnectSession(
+          topic: session.topic,
+          reason: Errors.getSdkError(Errors.USER_DISCONNECTED),
+        );
+      }
+    }
+  }
+
+  Future<void> _updateConnectionStatus() async {
+    final sessions = _connector?.sessions.getAll();
+  }
+
   Future<bool> _verifySignature({WalletProvider? walletProvider, String? address}) async {
     if (address == null || currentChain == null || !isOnOperatingChain) return false;
 
+    // Native
     if (!kIsWeb) {
-      // Launch wallet app if on mobile
-      // Delay to make sure FlutterBird is in foreground before launching wallet app again
       await Future.delayed(const Duration(seconds: 1));
-      // v2 doesn't have a uri property in currentSession so you need to get the proper URI.
+      _launchWallet(wallet: walletProvider, uri: 'wc:${currentSession!.topic}@2?relay-protocol=irn&symKey=${currentSession!.relay.protocol}');
+      // LIFF	
+    } else if(isInLiff) {	
+      await Future.delayed(const Duration(seconds: 1));	
       _launchWallet(wallet: walletProvider, uri: 'wc:${currentSession!.topic}@2?relay-protocol=irn&symKey=${currentSession!.relay.protocol}');
     }
+    
 
-    log('Signing message...', name: 'AuthenticationService');
-
-    // Let Crypto Wallet sign custom message
     String nonce = Nonce.generate(32, math.Random.secure());
     String messageText = 'Please sign this message to authenticate with Flutter Bird.\nChallenge: $nonce';
     final String signature = await _connector!.request(
@@ -159,48 +240,47 @@ class AuthenticationServiceImpl implements AuthenticationService {
   }
 
   @override
-  unauthenticate() async {
+  Future<void> unauthenticate() async {
     if (currentSession != null) {
       await _connector?.disconnectSession(topic: currentSession!.topic, reason: Errors.getSdkError(Errors.USER_DISCONNECTED));
     }
     _authenticatedAccount = null;
     _connector = null;
-    webQrData = null;
+    _webQrData = null;
   }
 
-  /// Creates a WalletConnect Instance
   Future<void> _createConnector({WalletProvider? walletProvider}) async {
-    // Create WalletConnect Connector
     try {
       _connector = await Web3App.createInstance(
-        projectId: dotenv.env['WALLET_CONNECT_PROJECT_ID']!,
+        projectId: projectId,
         metadata: const PairingMetadata(
           name: 'Flutter Bird',
           description: 'WalletConnect Developer App',
-          url: 'https://flutter-bird.netlify.app',
+          url: 'https://dynamic-tartufo-87d5f8.netlify.app', // FIXME: real url
           icons: [
             'https://raw.githubusercontent.com/Tonnanto/flutter-bird/v1.0/flutter_bird_app/assets/icon.png',
           ],
         ),
       );
 
-      // Subscribe to events
       _connector?.onSessionConnect.subscribe((SessionConnect? session) async {
-        log('connected: ' + session.toString(), name: 'AuthenticationService');
-        String? address = session?.session.namespaces['eip155']?.accounts.first.split(':').last;
-        webQrData = null;
-        final authenticated = await _verifySignature(walletProvider: walletProvider, address: address);
-        if (authenticated) log('authenticated successfully: ' + session.toString(), name: 'AuthenticationService');
-        onAuthStatusChanged();
+        if (!isInLiff) {
+          log('connected: ' + session.toString(), name: 'AuthenticationService');
+          String? address = session?.session.namespaces['eip155']?.accounts.first.split(':').last;
+          _webQrData = null;
+          final authenticated = await _verifySignature(walletProvider: walletProvider, address: address);
+          if (authenticated) log('authenticated successfully: ' + session.toString(), name: 'AuthenticationService');
+          onAuthStatusChanged();
+        }
       });
       _connector?.onSessionUpdate.subscribe((SessionUpdate? payload) async {
         log('session_update: ' + payload.toString(), name: 'AuthenticationService');
-        webQrData = null;
+        _webQrData = null;
         onAuthStatusChanged();
       });
       _connector?.onSessionDelete.subscribe((SessionDelete? session) {
         log('disconnect: ' + session.toString(), name: 'AuthenticationService');
-        webQrData = null;
+        _webQrData = null;
         _authenticatedAccount = null;
         onAuthStatusChanged();
       });
@@ -218,22 +298,23 @@ class AuthenticationServiceImpl implements AuthenticationService {
       return;
     }
 
-    if (wallet.universal != null && await canLaunchUrl(Uri.parse(wallet.universal!))) {
+    if (wallet.mobile.universal != null && await canLaunchUrl(Uri.parse(wallet.mobile.universal!))) {
       await launchUrl(
-        _convertToWcUri(appLink: wallet.universal!, wcUri: uri),
+        _convertToWcUri(appLink: wallet.mobile.universal!, wcUri: uri),
         mode: LaunchMode.externalApplication,
       );
-    } else if (wallet.native != null && await canLaunchUrl(Uri.parse(wallet.native!))) {
+    } else if (wallet.mobile.native != null && await canLaunchUrl(Uri.parse(wallet.mobile.native!))) {
       await launchUrl(
-        _convertToWcUri(appLink: wallet.native!, wcUri: uri),
+        _convertToWcUri(appLink: wallet.mobile.native!, wcUri: uri),
       );
     } else {
-      if (Platform.isIOS && wallet.iosLink != null) {
-        await launchUrl(Uri.parse(wallet.iosLink!));
-      } else if (Platform.isAndroid && wallet.androidLink != null) {
-        await launchUrl(Uri.parse(wallet.androidLink!));
+      if (Platform.isIOS && wallet.appUrls.ios != null) {
+        await launchUrl(Uri.parse(wallet.appUrls.ios!));
+      } else if (Platform.isAndroid && wallet.appUrls.android != null) {
+        await launchUrl(Uri.parse(wallet.appUrls.android!));
       }
     }
+
   }
 
   Uri _convertToWcUri({

@@ -1,10 +1,16 @@
 const FlutterBirdSkins = artifacts.require("FlutterBirdSkins");
 
+const { splitData } = require('../lib/split_data');
+const { waitTx } = require('../lib/common');
+const { createUri } = require('./create_uri');
+const { uploadUri } = require('./upload_uri');
 
 /**
  * This function mints a random Flutter Bird Skin
  */
 module.exports = async callback => {
+    const splitSize = 24544;
+
     const flutterBirdSkins = await FlutterBirdSkins.deployed()
     console.log('Minting a random Flutter Bird Skin on contract:', flutterBirdSkins.address)
 
@@ -18,13 +24,27 @@ module.exports = async callback => {
         return;
     }
 
-    const tx = await flutterBirdSkins.mintSkin(unmintedTokenId, {value: ethToWei(0.01)})
+    const tokenInfo = {
+        filePath: `../../output/images/1.png`,  // FIXME: val
+        unmintedTokenId,
+        name: `Flutter Bird - ${unmintedTokenId}`,
+        description:
+          'NFT Flutter Bird',
+    };
+
+    // createUri
+    uri = createUri(tokenInfo, false)
+
+    // uploadUri
+    await uploadUri(flutterBirdSkins, unmintedTokenId, uri, splitSize);
+
+    // mint
+    const tx = await flutterBirdSkins.mintSkin(unmintedTokenId, {value: ethToWei(1)})
 
     console.log("Minting successful\nToken ID of new Skin: " + unmintedTokenId);
 
     callback(tx.tx)
 }
-
 
 /**
  * Converts eth to wei

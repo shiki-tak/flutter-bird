@@ -12,12 +12,12 @@ async function generateImage(tokenId, bird, head, eyes, mouth, neck) {
     const canvas = createCanvas(imageSize.width, imageSize.height);
     const context = canvas.getContext("2d");
 
-    const outputDirectory = "../output/images"
-    const birdDirectory = "../input/layers/bird"
-    const headDirectory = "../input/layers/head"
-    const eyesDirectory = "../input/layers/eyes"
-    const mouthDirectory = "../input/layers/mouth"
-    const neckDirectory = "../input/layers/neck"
+    const outputDirectory = "../../output/images"
+    const birdDirectory = "../../input/layers/bird"
+    const headDirectory = "../../input/layers/head"
+    const eyesDirectory = "../../input/layers/eyes"
+    const mouthDirectory = "../../input/layers/mouth"
+    const neckDirectory = "../../input/layers/neck"
 
     // Draw bird first
     const birdImage = await loadImage(`${birdDirectory}/${bird}.png`);

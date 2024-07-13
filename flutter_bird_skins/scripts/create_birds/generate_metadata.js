@@ -1,5 +1,5 @@
 const fs = require('fs')
-const traits = require("../input/traits.json");
+const traits = require("../../input/traits.json");
 
 function getRandomWeightedTrait(traitList, guaranteed = false) {
 
@@ -33,7 +33,7 @@ function getRandomWeightedTrait(traitList, guaranteed = false) {
 function generateMetadata(tokenId) {
     console.log('Creating metadata for skin ' + tokenId)
 
-    const filename = '../output/metadata/' + tokenId.toString() + '.json'
+    const filename = '../../output/metadata/' + tokenId.toString() + '.json'
 
     // Check if metadata exists already
     if (fs.existsSync(filename)) {
@@ -42,7 +42,7 @@ function generateMetadata(tokenId) {
     }
 
     // Generate random metadata
-    const skinTemplate = require('../input/metadata_template.json');
+    const skinTemplate = require('../../input/metadata_template.json');
 
     // Clone object
     const skinMetadata = Object.assign({}, JSON.parse(JSON.stringify(skinTemplate)));

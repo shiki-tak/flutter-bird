@@ -2,7 +2,7 @@ const {generateImage} = require("./generate_image")
 const {generateMetadata} = require("./generate_metadata")
 
 // Test data generation
-for (let tokenId = 0; tokenId < 1000; tokenId++) {
+for (let tokenId = 1; tokenId < 2; tokenId++) {
 
     // Generate random metadata
     const skinMetadata = generateMetadata(tokenId)

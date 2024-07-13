@@ -197,6 +197,60 @@ Summary
 > Final cost:          0.118115450004724618 ETH
 ```
 
+### Generate and Mint full onchain bird
+- You can generate random bird images using a script.
+- Using the deployed contract, you can base64 encode the generated bird image and set it as the tokenURI to mint it as a full onchain NFT.
+
+- Create bird
+  - Since multiple images will be generated in a loop, please change the upper limit accordingly.
+```
+% cd scripts/create_birds
+% node create_data.js
+Creating metadata for skin 0
+```
+
+- Mint full onchain bird
+  - The generated image is used to mint NFTs.
+  - Please run it in the environment where you deployed the contract.
+  - Please change the filePath of toenInfo in `mint_random_skin.js` as appropriate.
+  - Please execute the following in your docker environment.
+
+```
+# cd scripts/mint_full_onchain_bird
+# truffle exec mint_random_skin.js --network development
+Using network 'development'.
+
+Minting a random Flutter Bird Skin on contract: 0xBa29cfe58943Ee7830663C31029ef73f65B1D470
+data:application;json,{"name":"Flutter Bird - 358","description":"NFT Flutter Bird","attributes":[{"trait_type":"File size","value":"17,510 bytes"}],"image":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAu4AAALuCAYAAADxHZPKAAAABmJLR0QA/wD/AP+gvaeTAAAgAElEQVR4nO3dW4xsWXkf8G/VnDMzppuLLWMD4WI5sjkTkBwFCytyZJLYGWGEIkRAAhmJEGEpD4mSOHFirOAHiPEFIhNFQnF4QLIQ..."}
+chunk count: 1
+appendUri tx: [object Object]
+Minting successful
+Token ID of new Skin: 358
+0xbfd1a547a6dc6d332e5dc23530992c550719c8db3e39ef3454d8cb24c05617be
+```
+
+- Check the minted NFT using truffle.
+  - Please execute the following in your docker environment.
+  - You can open the NFT image by pasting `data:image/png;base64, xxxxxxx` from the image field of the uri into the search box of your browser.
+```
+// If you are deploying to the testnet, set the network to baobab.
+# truffle console --network development
+truffle(development)> let instance = await FlutterBirdSkins.deployed()
+undefined
+truffle(development)> ownerAddress="0x244d85991c825ad2672111ed73e089fbd39e357d"
+'0x244d85991c825ad2672111ed73e089fbd39e357d'
+truffle(development)> let tokens = await instance.getTokensForOwner(ownerAddress)
+undefined
+truffle(development)> console.log(tokens.map(token => token.toString()))
+[ '358' ]
+truffle(development)> let uri = await instance.tokenURI(358)
+undefined
+truffle(development)> console.log(uri)
+data:application;json,{"name":"Flutter Bird - 358","description":"NFT Flutter Bird","attributes":[{"trait_type":"File size","value":"10,029 bytes"}],"image":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAu4AAALuCAYAAADxHZPKAAAABmJLR0QA/wD/AP+gvaeTAAAgAElEQVR4nO3dW4xsWXkf8G/VnDMzppuLLWMD4WI5sjkTkBwFCytyZJLYGWGEIkRAAhmJEGEpD4mSOHFirOAHiPEFIhNFQnF4QLIQ..."}
+```
+
+
+
 ## Access via LINE
 The LINE Messenger API allows us to receive URLs via LINE.
 

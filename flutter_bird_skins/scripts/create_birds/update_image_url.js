@@ -1,6 +1,6 @@
 const fs = require('fs');
 
-const dirname = "../output/metadata"
+const dirname = "../../output/metadata"
 
 const cid = "bafybeib3ss7fb7wejue2b7nv3frucl3xvhd27yycyw37csodsytvv5ipou";
 

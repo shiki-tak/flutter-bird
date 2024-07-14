@@ -216,9 +216,8 @@ Creating metadata for skin 0
   - Please execute the following in your docker environment.
 
 ```
-# cd scripts/mint_full_onchain_bird
-# truffle exec mint_random_skin.js --network development
-Using network 'development'.
+# truffle exec scripts/mint_full_onchain_bird/mint_random_skin.js --network baobab
+Using network 'baobab'.
 
 Minting a random Flutter Bird Skin on contract: 0xBa29cfe58943Ee7830663C31029ef73f65B1D470
 data:application;json,{"name":"Flutter Bird - 358","description":"NFT Flutter Bird","attributes":[{"trait_type":"File size","value":"17,510 bytes"}],"image":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAu4AAALuCAYAAADxHZPKAAAABmJLR0QA/wD/AP+gvaeTAAAgAElEQVR4nO3dW4xsWXkf8G/VnDMzppuLLWMD4WI5sjkTkBwFCytyZJLYGWGEIkRAAhmJEGEpD4mSOHFirOAHiPEFIhNFQnF4QLIQ..."}
@@ -234,18 +233,18 @@ Token ID of new Skin: 358
   - You can open the NFT image by pasting `data:image/png;base64, xxxxxxx` from the image field of the uri into the search box of your browser.
 ```
 // If you are deploying to the testnet, set the network to baobab.
-# truffle console --network development
-truffle(development)> let instance = await FlutterBirdSkins.deployed()
+# truffle console --network baobab
+truffle(baobab)> let instance = await FlutterBirdSkins.deployed()
 undefined
-truffle(development)> ownerAddress="0x244d85991c825ad2672111ed73e089fbd39e357d"
+truffle(baobab)> ownerAddress="0x244d85991c825ad2672111ed73e089fbd39e357d"
 '0x244d85991c825ad2672111ed73e089fbd39e357d'
-truffle(development)> let tokens = await instance.getTokensForOwner(ownerAddress)
+truffle(baobab)> let tokens = await instance.getTokensForOwner(ownerAddress)
 undefined
-truffle(development)> console.log(tokens.map(token => token.toString()))
+truffle(baobab)> console.log(tokens.map(token => token.toString()))
 [ '358' ]
-truffle(development)> let uri = await instance.tokenURI(358)
+truffle(baobab)> let uri = await instance.tokenURI(358)
 undefined
-truffle(development)> console.log(uri)
+truffle(baobab)> console.log(uri)
 data:application;json,{"name":"Flutter Bird - 358","description":"NFT Flutter Bird","attributes":[{"trait_type":"File size","value":"10,029 bytes"}],"image":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAu4AAALuCAYAAADxHZPKAAAABmJLR0QA/wD/AP+gvaeTAAAgAElEQVR4nO3dW4xsWXkf8G/VnDMzppuLLWMD4WI5sjkTkBwFCytyZJLYGWGEIkRAAhmJEGEpD4mSOHFirOAHiPEFIhNFQnF4QLIQ..."}
 ```
 

@@ -25,7 +25,7 @@ module.exports = async callback => {
     }
 
     const tokenInfo = {
-        filePath: `../../output/images/1.png`,  // FIXME: val
+        filePath: `./output/images/4.png`,  // FIXME: val
         unmintedTokenId,
         name: `Flutter Bird - ${unmintedTokenId}`,
         description:

@@ -55,7 +55,7 @@ class AuthorizationServiceImpl implements AuthorizationService {
 
       futures.add(contract.tokenURI(tokenId).then((tokenUri) async {
         // Replace placeholder with actual skin
-        Skin? skin = await getSkin(tokenUri, tokenId.toInt());
+        Skin? skin = await Skin(tokenId: tokenId, name: skinName, imageLocation: tokenUri);
         if (skin == null) {
           skins?.remove(tokenId.toInt());
         } else {
@@ -68,26 +68,4 @@ class AuthorizationServiceImpl implements AuthorizationService {
     await Future.value(futures);
   }
 
-  /// Uses the token URI to fetch the image file from IPFS
-  /// @return the Skin Object with the correct image data
-  Future<Skin?> getSkin(String tokenUri, int tokenId) async {
-    Uri metadataUrl = Uri.parse(_ipfsUriToGateway(tokenUri));
-
-    try {
-      Response? metadataResponse = await http.get(metadataUrl);
-      Map<String, dynamic> metadata = jsonDecode(metadataResponse.body);
-
-      String skinName = metadata['name'];
-      String imageIpfsUri = metadata['image'];
-      String imageUrl = _ipfsUriToGateway(imageIpfsUri);
-
-      return Skin(tokenId: tokenId, name: skinName, imageLocation: imageUrl);
-    } on Exception catch (e) {
-      log('Failed to load metadata for tokenURI $tokenUri');
-      log(e.toString());
-    }
-    return null;
-  }
-
-  String _ipfsUriToGateway(String ipfsUri) => ipfsGatewayUrl + ipfsUri.substring(7);
 }

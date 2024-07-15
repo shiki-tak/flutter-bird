@@ -55,8 +55,8 @@ class AuthorizationServiceImpl implements AuthorizationService {
 
       futures.add(contract.tokenURI(tokenId).then((tokenUri) async {
         // Replace placeholder with actual skin
-        Skin? skin = await Skin(tokenId: tokenId, name: skinName, imageLocation: tokenUri);
-        if (skin == null) {
+        Skin? skin = await Skin(tokenId: tokenId.toInt(), name: skinName, imageLocation: tokenUri);
+        if (tokenUri.isEmpty) {
           skins?.remove(tokenId.toInt());
         } else {
           skins?[tokenId.toInt()] = skin;

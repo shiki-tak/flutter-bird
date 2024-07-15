@@ -9,7 +9,7 @@
   "dependencies": {
     "@openzeppelin/contracts": "^4.7.0",
     "@types/lodash": "^4.14.186",
-    "truffle-hdwallet-provider-klaytn": "^1.4.1",
-    "lodash": "^4.17.21"
+    "lodash": "^4.17.21",
+    "truffle-hdwallet-provider-klaytn": "^1.4.1"
   }
 }

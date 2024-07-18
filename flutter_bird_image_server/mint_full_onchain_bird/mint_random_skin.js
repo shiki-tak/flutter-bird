@@ -36,7 +36,7 @@ async function mintRandomSkin() {
     }
 
     const tokenInfo = {
-        filePath: `./output/images/5.png`,  // FIXME: val
+        filePath: `./output/images/1.png`,  // FIXME: val
         unmintedTokenId,
         name: `Flutter Bird - ${unmintedTokenId}`,
         description: 'NFT Flutter Bird',

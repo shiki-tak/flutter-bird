@@ -202,14 +202,16 @@ Summary
 - Using the deployed contract, you can base64 encode the generated bird image and set it as the tokenURI to mint it as a full onchain NFT.
 
 - Create bird
-  - Since multiple images will be generated in a loop, please change the upper limit accordingly.
+  - You can start the server to get or generate images.
+  - If the target tokenId exists, it will be retrieved; if not, it will be generated.
 ```
-% cd scripts/create_birds
-% node create_data.js
-Creating metadata for skin 0
+% cd flutter_bird_image_server
+% npm run start
+% curl -o image.png http://localhost:3000/image/:tokenId
 ```
 
 - Mint full onchain bird
+  - We recommend minting from Flutter Birds, but you can also mint it manually.
   - The generated image is used to mint NFTs.
   - Please run it in the environment where you deployed the contract.
   - Please change the filePath of toenInfo in `mint_random_skin.js` as appropriate.

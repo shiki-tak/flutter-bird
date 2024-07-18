@@ -32,7 +32,7 @@ class NFTMinterService {
     }
   }
 
-  Future<void> mintRandomSkin() async {
+  Future<int> mintRandomSkin() async {
     if (!_authService.isAuthenticated || !_authService.isOnOperatingChain) {
       throw Exception('Wallet not connected or on wrong chain');
     }
@@ -104,6 +104,8 @@ class NFTMinterService {
       if (txHash == null) {
         throw Exception('Failed to send transaction');
       }
+
+      return unmintedTokenId;
 
     } catch (e) {
       print('Error minting NFT: $e');

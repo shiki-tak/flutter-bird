@@ -354,10 +354,10 @@ class _MainMenuViewState extends State<MainMenuView> with AutomaticKeepAliveClie
         const SnackBar(content: Text('Minting process started. Please check your wallet for confirmation.')),
       );
 
-      await web3Service.nftMinterService.mintRandomSkin();
+      int newTokenId = await web3Service.nftMinterService.mintRandomSkin();
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('NFT minted successfully!')),
+        SnackBar(content: Text('NFT #$newTokenId minted successfully!')),
       );
 
       await web3Service.authorizeUser(forceReload: true);

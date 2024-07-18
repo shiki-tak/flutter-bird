@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const fs = require('fs');
+const { mintRandomSkin } = require("./create_data")
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -12,15 +13,27 @@ app.use(cors({
   optionsSuccessStatus: 200
 }))
 
-app.get('/image/:filename', (req, res) => {
-  const filename = req.params.filename;
-  const imagePath = path.join(__dirname, 'assets', 'birds', filename);
-  console.log(`imagePath: ${imagePath}`);
+app.get('/image/:tokenId', async (req, res) => {
+  try {
+    const tokenId = req.params.tokenId;
+    const filename = tokenId + ".png";
   
-  if (fs.existsSync(imagePath)) {
-    res.sendFile(imagePath);
-  } else {
-    res.status(404).send('Image not found');
+    const imagePath = path.join(__dirname, 'output', 'images', filename);
+    console.log(`imagePath: ${imagePath}`);
+    
+    if (fs.existsSync(imagePath)) {
+      res.sendFile(imagePath);
+    } else {
+      await mintRandomSkin(tokenId);
+      if (fs.existsSync(imagePath)) {
+        res.sendFile(imagePath);
+      } else {
+        throw new Error('Failed to generate image');
+      }
+    }
+  } catch(e) {
+    console.error('Error in /image/:tokenId route:', e);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 

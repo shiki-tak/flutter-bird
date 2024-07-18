@@ -77,35 +77,35 @@ class _MainMenuViewState extends State<MainMenuView> with AutomaticKeepAliveClie
     birdSize = worldDimensions.height / 8;
 
     try {
-    return Scaffold(
-      body: Consumer<FlutterBirdController>(builder: (context, web3Service, child) {
-        web3Service.authorizeUser();
-        if (web3Service.skins != null) {
-          birds = [
-            const Bird(),
-            ...web3Service.skins!.map((e) => Bird(
-                  skin: e,
-                ))
-          ];
-          if (web3Service.skins!.length < selectedBird) {
-            selectedBird = web3Service.skins!.length;
+      return Scaffold(
+        body: Consumer<FlutterBirdController>(builder: (context, web3Service, child) {
+          web3Service.authorizeUser();
+          if (web3Service.skins != null) {
+            birds = [
+              const Bird(),
+              ...web3Service.skins!.map((e) => Bird(
+                    skin: e,
+                  ))
+            ];
+            if (web3Service.skins!.length < selectedBird) {
+              selectedBird = web3Service.skins!.length;
+            }
+          } else {
+            selectedBird = 0;
           }
-        } else {
-          selectedBird = 0;
-        }
 
-        return Center(
-          child: ConstrainedBox(
-            constraints: BoxConstraints(maxWidth: maxWidth),
-            child: Stack(alignment: Alignment.center, children: [
-              const Background(),
-              _buildBirdSelector(web3Service),
-              _buildMenu(web3Service),
-            ]),
-          ),
-        );
-      }),
-    );
+          return Center(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(maxWidth: maxWidth),
+              child: Stack(alignment: Alignment.center, children: [
+                const Background(),
+                _buildBirdSelector(web3Service),
+                _buildMenu(web3Service),
+              ]),
+            ),
+          );
+        }),
+      );
     } catch(e, stackTrace) {
       print("Error in MainMenuView: $e");
       print("StackTrace: $stackTrace");

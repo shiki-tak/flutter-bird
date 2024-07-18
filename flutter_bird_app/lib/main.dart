@@ -8,14 +8,9 @@ import 'package:flutter_line_liff/flutter_line_liff.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-   if (const String.fromEnvironment('FLUTTER_ENV') != 'production') {
-    await dotenv.load(fileName: ".env");
-  } 
+  await dotenv.load(fileName: ".env");
 
   print("Starting application...");
-  const String liffId = String.fromEnvironment('LIFF_ID');
-    
-  final String? os = FlutterLineLiff().os;
   final bool isInClient = FlutterLineLiff().isInClient;
   runApp(MyApp(isInClient: isInClient));
 }

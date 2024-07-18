@@ -9,10 +9,12 @@ import 'package:http/http.dart' as http;
 import 'package:nonce/nonce.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:walletconnect_flutter_v2/walletconnect_flutter_v2.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 import '../model/account.dart';
 import '../model/wallet_provider.dart';
 
+/// Manages the authentication process and communication with crypto wallets
 abstract class AuthenticationService {
   Future<void> initialize(bool isInLiff);
 
@@ -41,7 +43,7 @@ class AuthenticationServiceImpl implements AuthenticationService {
   final Function() onAuthStatusChanged;
   WalletProvider? _lastUsedWallet;
 
-  static const String projectId = String.fromEnvironment('WALLET_CONNECT_PROJECT_ID');
+  String projectId = dotenv.env['WALLET_CONNECT_PROJECT_ID'] ?? '';
 
   AuthenticationServiceImpl({
     required this.isInLiff,
@@ -69,9 +71,9 @@ class AuthenticationServiceImpl implements AuthenticationService {
   @override
   bool get isAuthenticated => isConnected && authenticatedAccount != null;
 
+  // The data to display in a QR Code for connections on Desktop / Browser.
   @override
-  String? get webQrData => _webQrData;
-  String? _webQrData;
+  String? webQrData;
 
   WalletProvider? get lastUsedWallet => _lastUsedWallet;
 
@@ -153,7 +155,7 @@ class AuthenticationServiceImpl implements AuthenticationService {
         if (uri != null) {
           // Web
           if (kIsWeb && !isInLiff) {
-            _webQrData = uri.toString();
+            webQrData = uri.toString();
             onAuthStatusChanged();
           // LIFF
           } else if(kIsWeb && isInLiff) {
@@ -246,7 +248,7 @@ class AuthenticationServiceImpl implements AuthenticationService {
     }
     _authenticatedAccount = null;
     _connector = null;
-    _webQrData = null;
+    webQrData = null;
   }
 
   Future<void> _createConnector({WalletProvider? walletProvider}) async {
@@ -267,7 +269,7 @@ class AuthenticationServiceImpl implements AuthenticationService {
         if (!isInLiff) {
           log('connected: ' + session.toString(), name: 'AuthenticationService');
           String? address = session?.session.namespaces['eip155']?.accounts.first.split(':').last;
-          _webQrData = null;
+          webQrData = null;
           final authenticated = await _verifySignature(walletProvider: walletProvider, address: address);
           if (authenticated) log('authenticated successfully: ' + session.toString(), name: 'AuthenticationService');
           onAuthStatusChanged();
@@ -275,12 +277,12 @@ class AuthenticationServiceImpl implements AuthenticationService {
       });
       _connector?.onSessionUpdate.subscribe((SessionUpdate? payload) async {
         log('session_update: ' + payload.toString(), name: 'AuthenticationService');
-        _webQrData = null;
+        webQrData = null;
         onAuthStatusChanged();
       });
       _connector?.onSessionDelete.subscribe((SessionDelete? session) {
         log('disconnect: ' + session.toString(), name: 'AuthenticationService');
-        _webQrData = null;
+        webQrData = null;
         _authenticatedAccount = null;
         onAuthStatusChanged();
       });

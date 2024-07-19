@@ -1,51 +1,38 @@
-const fs = require('fs')
+const crypto = require('crypto');
 const traits = require("../input/traits.json");
 
-function getRandomWeightedTrait(traitList, guaranteed = false) {
-
-    // Calculate total weights
-    let totalWeight = 0;
-    traitList.forEach(function (trait) {
+function getRandomWeightedTrait(traitList, guaranteed = false, rng) {
+    let totalWeight = traitList.reduce((sum, trait) => {
         if (!guaranteed || (trait.name !== "none" && trait.name !== "default")) {
-            totalWeight += trait.weight
+            return sum + trait.weight;
         }
-    })
+        return sum;
+    }, 0);
 
-    // Get random number
-    const randomNumber = Math.random() * totalWeight
-    let weightCounter = 0;
-
-    // Find trait for random number
+    let randomNumber = rng() * totalWeight;
+    
     for (const trait of traitList) {
-        if (guaranteed && (trait.name === "none" || trait.name === "default"))
-            continue
-
-        weightCounter += trait.weight
-        if (weightCounter >= randomNumber) {
-            if (trait.name === "none")
-                return null;
-            return trait.name
+        if (guaranteed && (trait.name === "none" || trait.name === "default")) {
+            continue;
+        }
+        
+        randomNumber -= trait.weight;
+        if (randomNumber <= 0) {
+            return trait.name === "none" ? "" : trait.name;
         }
     }
+    
+    return "";
 }
 
-
 function generateMetadata(tokenId) {
-    console.log('Creating metadata for skin ' + tokenId)
+    console.log('Creating metadata for skin ' + tokenId);
 
-    const filename = './output/metadata/' + tokenId.toString() + '.json'
+    const seed = crypto.createHash('sha256').update(tokenId.toString()).digest('hex');
+    const rng = require('seedrandom')(seed);
 
-    // Check if metadata exists already
-    if (fs.existsSync(filename)) {
-        console.log('Metadata for skin with tokenId ' + tokenId + ' already exists')
-        return JSON.parse(fs.readFileSync(filename))
-    }
-
-    // Generate random metadata
     const skinTemplate = require('../input/metadata_template.json');
-
-    // Clone object
-    const skinMetadata = Object.assign({}, JSON.parse(JSON.stringify(skinTemplate)));
+    const skinMetadata = JSON.parse(JSON.stringify(skinTemplate));
 
     const birdList = traits.bird;
     const headList = traits.head;
@@ -53,37 +40,27 @@ function generateMetadata(tokenId) {
     const mouthList = traits.mouth;
     const neckList = traits.neck;
 
-    // Prevent default bird from being generated
-    let guaranteedTrait = -1
-    const randomBird = getRandomWeightedTrait(birdList)
-    if (randomBird === 'default') guaranteedTrait = Math.floor(Math.random() * 4)
+    let guaranteedTrait = Math.floor(rng() * 5) - 1;
+    const randomBird = getRandomWeightedTrait(birdList, false, rng);
+    if (randomBird === 'default') guaranteedTrait = Math.floor(rng() * 4);
 
-    // Have a 2/3 change of at least one trait being empty
-    let guaranteedNotTrait = Math.floor(Math.random() * 6)
+    let guaranteedNotTrait = Math.floor(rng() * 6);
     if (guaranteedTrait === guaranteedNotTrait) guaranteedNotTrait = -1;
 
-    const randomHead = guaranteedNotTrait === 0 ? null : getRandomWeightedTrait(headList, guaranteedTrait === 0)
-    const randomEyes = guaranteedNotTrait === 1 ? "default" : getRandomWeightedTrait(eyesList, guaranteedTrait === 1)
-    const randomMouth = guaranteedNotTrait === 2 ? null : getRandomWeightedTrait(mouthList, guaranteedTrait === 2)
-    const randomNeck = guaranteedNotTrait === 3 ? null : getRandomWeightedTrait(neckList, guaranteedTrait === 3)
+    const randomHead = guaranteedNotTrait === 0 ? "" : getRandomWeightedTrait(headList, guaranteedTrait === 0, rng);
+    const randomEyes = guaranteedNotTrait === 1 ? "default" : getRandomWeightedTrait(eyesList, guaranteedTrait === 1, rng);
+    const randomMouth = guaranteedNotTrait === 2 ? "" : getRandomWeightedTrait(mouthList, guaranteedTrait === 2, rng);
+    const randomNeck = guaranteedNotTrait === 3 ? "" : getRandomWeightedTrait(neckList, guaranteedTrait === 3, rng);
 
-    skinMetadata['name'] = 'Flutter Bird #' + tokenId.toString()
-    skinMetadata['attributes'][0]['value'] = randomBird.toLowerCase()
-    if (randomHead != null)
-        skinMetadata['attributes'][1]['value'] = randomHead.toLowerCase()
-    skinMetadata['attributes'][2]['value'] = randomEyes.toLowerCase()
-    if (randomMouth != null)
-        skinMetadata['attributes'][3]['value'] = randomMouth.toLowerCase()
-    if (randomNeck != null)
-        skinMetadata['attributes'][4]['value'] = randomNeck.toLowerCase()
+    skinMetadata.name = 'Flutter Bird #' + tokenId.toString();
+    skinMetadata.attributes[0].value = randomBird.toLowerCase();
+    skinMetadata.attributes[1].value = randomHead.toLowerCase();
+    skinMetadata.attributes[2].value = randomEyes.toLowerCase();
+    skinMetadata.attributes[3].value = randomMouth.toLowerCase();
+    skinMetadata.attributes[4].value = randomNeck.toLowerCase();
 
-
-    // Write metadata to json file
-
-    const data = JSON.stringify(skinMetadata)
-    fs.writeFileSync(filename, data)
-
+    console.log('Generated metadata:', JSON.stringify(skinMetadata, null, 2));
     return skinMetadata;
 }
 
-module.exports = {generateMetadata}
+module.exports = { generateMetadata };

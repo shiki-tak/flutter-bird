@@ -1,5 +1,5 @@
 const chainId = 1001; // Klaytn Testnet baobab
-const flutterBirdSkinsContractAddress = '0x380672FEA689729Ff5beac5Fa71a1c88CcFBE486';
+const flutterBirdSkinsContractAddress = '0xc67AD7E04D8042Ea40799B21248E038D5f58660D';
 const ipfsGatewayUrl = 'https://nftstorage.link/ipfs/'; //FIXME: 
 const alchemyNodeProviderUrl = 'https://eth-goerli.g.alchemy.com/v2/';
 const walletConnectBridge = 'https://bridge.walletconnect.org';

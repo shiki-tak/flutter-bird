@@ -220,7 +220,7 @@ Summary
 ```
 # node scripts/mint_full_onchain_bird/mint_random_skin.js
 Minting a random Flutter Bird Skin on contract: 0xBa29cfe58943Ee7830663C31029ef73f65B1D470
-data:application;json,{"name":"Flutter Bird - 358","description":"NFT Flutter Bird","attributes":[{"trait_type":"File size","value":"17,510 bytes"}],"image":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAu4AAALuCAYAAADxHZPKAAAABmJLR0QA/wD/AP+gvaeTAAAgAElEQVR4nO3dW4xsWXkf8G/VnDMzppuLLWMD4WI5sjkTkBwFCytyZJLYGWGEIkRAAhmJEGEpD4mSOHFirOAHiPEFIhNFQnF4QLIQ..."}
+data:application/json,{"name":"Flutter Bird - 358","description":"NFT Flutter Bird","attributes":[{"trait_type":"File size","value":"17,510 bytes"}],"image":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAu4AAALuCAYAAADxHZPKAAAABmJLR0QA/wD/AP+gvaeTAAAgAElEQVR4nO3dW4xsWXkf8G/VnDMzppuLLWMD4WI5sjkTkBwFCytyZJLYGWGEIkRAAhmJEGEpD4mSOHFirOAHiPEFIhNFQnF4QLIQ..."}
 chunk count: 1
 appendUri tx: [object Object]
 Minting successful
@@ -257,7 +257,7 @@ truffle(baobab)> console.log(tokens.map(token => token.toString()))
 truffle(baobab)> let uri = await instance.tokenURI(358)
 undefined
 truffle(baobab)> console.log(uri)
-data:application;json,{"name":"Flutter Bird - 358","description":"NFT Flutter Bird","attributes":[{"trait_type":"File size","value":"10,029 bytes"}],"image":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAu4AAALuCAYAAADxHZPKAAAABmJLR0QA/wD/AP+gvaeTAAAgAElEQVR4nO3dW4xsWXkf8G/VnDMzppuLLWMD4WI5sjkTkBwFCytyZJLYGWGEIkRAAhmJEGEpD4mSOHFirOAHiPEFIhNFQnF4QLIQ..."}
+data:application/json,{"name":"Flutter Bird - 358","description":"NFT Flutter Bird","attributes":[{"trait_type":"File size","value":"10,029 bytes"}],"image":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAu4AAALuCAYAAADxHZPKAAAABmJLR0QA/wD/AP+gvaeTAAAgAElEQVR4nO3dW4xsWXkf8G/VnDMzppuLLWMD4WI5sjkTkBwFCytyZJLYGWGEIkRAAhmJEGEpD4mSOHFirOAHiPEFIhNFQnF4QLIQ..."}
 ```
 
 

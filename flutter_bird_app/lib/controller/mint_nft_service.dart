@@ -114,8 +114,8 @@ class NFTMinterService {
   }
 
   Future<String> _createAndUploadUri(int tokenId) async {
-    final String filename = '2.png';
-    final String imageUrl = 'https://flutter-bird-image-server.vercel.app/image/$filename';
+    print('Create And Upload uri NFT # $tokenId');
+    final String imageUrl = 'https://flutter-bird-image-server.vercel.app';
     final String name = 'Flutter Bird - $tokenId';
     final String description = 'NFT Flutter Bird';
 
@@ -123,7 +123,8 @@ class NFTMinterService {
       final uri = await _createUri(
         name: name,
         description: description,
-        imageUrl: imageUrl,
+        imageServerUrl: imageUrl,
+        tokenId: tokenId,
       );
 
       await _uploadUri(
@@ -138,36 +139,36 @@ class NFTMinterService {
     }
   }
 
+
   Future<String> _createUri({
     required String name,
     required String description,
-    required String imageUrl,
+    required String imageServerUrl,
+    required int tokenId,
   }) async {
     try {
       final response = await http.get(
-        Uri.parse(imageUrl),
+        Uri.parse('$imageServerUrl/api/image/$tokenId'),
         headers: {
           'Access-Control-Allow-Origin': '*',
         },
       );
+
       if (response.statusCode != 200) {
         throw Exception('Failed to load image: ${response.statusCode}');
       }
 
-      final Uint8List fileContent = response.bodyBytes;
-      final fileSize = '${fileContent.length} bytes';
-      final fileContentBase64 = base64Encode(fileContent);
+      final Map<String, dynamic> responseData = jsonDecode(response.body);
+      
+      final String imageDataUrl = responseData['imageDataUrl'];
 
       final json = jsonEncode({
         'name': name,
         'description': description,
-        'attributes': [
-          {'trait_type': 'File size', 'value': fileSize}
-        ],
-        'image': 'data:image/png;base64,$fileContentBase64',
+        'image': imageDataUrl,
       }).trim();
 
-      return 'data:application;json,$json';
+      return 'data:application/json,${Uri.encodeFull(json)}';
     } catch (e) {
       print('Error creating URI: $e');
       rethrow;

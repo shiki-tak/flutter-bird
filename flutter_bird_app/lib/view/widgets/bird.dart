@@ -47,9 +47,12 @@ class Bird extends StatelessWidget {
 
   String _extractImageDataUrl(String tokenUri) {
     try {
-      final jsonStr = tokenUri.replaceFirst('data:application;json,', '');
-      Map<String, dynamic> jsonData = jsonDecode(jsonStr);
-      
+      final jsonStr = tokenUri.replaceFirst('data:application/json,', '');
+      print('jsonStr:${jsonStr}');
+      String decodedStr = Uri.decodeFull(jsonStr);
+      print('decodedStr:${decodedStr}');
+      Map<String, dynamic> jsonData = jsonDecode(decodedStr);
+      print('jsonData:${jsonData}');
       if (jsonData.containsKey('image')) {
         return jsonData['image'] as String;
       } else {

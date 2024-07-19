@@ -1,5 +1,5 @@
-const fs = require("fs");
-const {createCanvas, loadImage} = require("canvas");
+const { createCanvas, loadImage } = require("canvas");
+const path = require('path');
 
 const imageSize = {
     width: 750,
@@ -7,54 +7,50 @@ const imageSize = {
 };
 
 async function generateImage(tokenId, bird, head, eyes, mouth, neck) {
-
-    // Create Canvas
     const canvas = createCanvas(imageSize.width, imageSize.height);
     const context = canvas.getContext("2d");
 
-    const outputDirectory = "./output/images"
-    const birdDirectory = "./input/layers/bird"
-    const headDirectory = "./input/layers/head"
-    const eyesDirectory = "./input/layers/eyes"
-    const mouthDirectory = "./input/layers/mouth"
-    const neckDirectory = "./input/layers/neck"
+    const baseUrl = process.env.VERCEL_URL 
+        ? `https://${process.env.VERCEL_URL}` 
+        : 'http://localhost:3000';
+
+    const loadLayerImage = async (directory, filename) => {
+        if (filename && filename !== "") {
+            const imagePath = path.join(__dirname, '..', 'public', 'input', 'layers', directory, `${filename}.png`);
+            console.log('Loading image from:', imagePath);
+            return await loadImage(imagePath);
+        }
+        return null;
+    };
 
     // Draw bird first
-    const birdImage = await loadImage(`${birdDirectory}/${bird}.png`);
+    const birdImage = await loadLayerImage('bird', bird);
     context.drawImage(birdImage, 0, 0, imageSize.width, imageSize.height);
 
     // Draw neck
-    if (neck != null && neck !== "") {
-        const neckImage = await loadImage(`${neckDirectory}/${neck}.png`);
+    const neckImage = await loadLayerImage('neck', neck);
+    if (neckImage) {
         context.drawImage(neckImage, 0, 0, imageSize.width, imageSize.height);
     }
 
     // Draw mouth
-    if (mouth != null && mouth !== "") {
-        const mouthImage = await loadImage(`${mouthDirectory}/${mouth}.png`);
+    const mouthImage = await loadLayerImage('mouth', mouth);
+    if (mouthImage) {
         context.drawImage(mouthImage, 0, 0, imageSize.width, imageSize.height);
     }
 
     // Draw eyes
-    const eyesImage = await loadImage(`${eyesDirectory}/${eyes}.png`);
+    const eyesImage = await loadLayerImage('eyes', eyes);
     context.drawImage(eyesImage, 0, 0, imageSize.width, imageSize.height);
 
     // Draw head
-    if (head != null && head !== "") {
-        const headImage = await loadImage(`${headDirectory}/${head}.png`);
+    const headImage = await loadLayerImage('head', head);
+    if (headImage) {
         context.drawImage(headImage, 0, 0, imageSize.width, imageSize.height);
     }
 
-    const imageData = canvas.toBuffer("image/png");
-
-    // Save image as png
-    const filePath = `${outputDirectory}/${tokenId}.png`;
-    fs.writeFileSync(
-        filePath,
-        imageData
-    );
-
-    return filePath;
+    // Convert canvas to data URL
+    return canvas.toDataURL("image/png");
 }
 
-module.exports = {generateImage}
+module.exports = { generateImage };

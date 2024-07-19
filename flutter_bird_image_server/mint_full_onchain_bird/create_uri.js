@@ -11,11 +11,11 @@ function createUri({ name, description, filePath }, urlEncode) {
     image: 'data:image/png;base64,' + fileContentBase64,
   });
   if (urlEncode) {
-    console.log('data:application;json,' + encodeURIComponent(json));
-    return 'data:application;json,' + encodeURIComponent(json);
+    console.log('data:application/json,' + encodeURIComponent(json));
+    return 'data:application/json,' + encodeURIComponent(json);
   } else {
-    console.log('data:application;json,' + json);
-    return 'data:application;json,' + json;
+    console.log('data:application/json,' + json);
+    return 'data:application/json,' + json;
   }
 }
 

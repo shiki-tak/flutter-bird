@@ -13,7 +13,8 @@
   "description": "",
   "dependencies": {
     "cors": "^2.8.5",
-    "express": "^4.19.2"
+    "express": "^4.19.2",
+    "seedrandom": "^3.0.5"
   },
   "devDependencies": {
     "canvas": "^2.11.2",

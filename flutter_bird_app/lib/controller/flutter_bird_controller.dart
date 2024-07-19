@@ -22,8 +22,14 @@ class FlutterBirdController extends ChangeNotifier {
 
   bool get isAuthenticated => _authenticationService.isAuthenticated;
 
+  bool get isConnected => _authenticationService.isConnected;
+
+  WalletProvider? get lastUsedWallet => (_authenticationService as AuthenticationServiceImpl).lastUsedWallet;
+
   String? get currentAddressShort =>
-      '${authenticatedAccount?.address.substring(0, 8)}...${authenticatedAccount?.address.substring(36)}';
+      authenticatedAccount?.address != null
+          ? '${authenticatedAccount!.address.substring(0, 8)}...${authenticatedAccount!.address.substring(36)}'
+          : null;
 
   String? get webQrData => _authenticationService.webQrData;
   bool _loadingSkins = false;
@@ -32,44 +38,99 @@ class FlutterBirdController extends ChangeNotifier {
   List<Skin>? skins;
   String? skinOwnerAddress;
 
-  init() {
-    // Setting Up Web3 Connection
-    const String skinContractAddress = flutterBirdSkinsContractAddress;
-    String rpcUrl = klaytnBaobabProviderUrl;
+  // Error handling
+  String? lastError;
 
-    _authenticationService = AuthenticationServiceImpl(
-        operatingChain: chainId,
-        onAuthStatusChanged: () async {
-          notifyListeners();
-          authorizeUser();
-        });
-    _authorizationService = AuthorizationServiceImpl(contractAddress: skinContractAddress, rpcUrl: rpcUrl);
+  Future<void> init(bool isInLiff) async {
+    try {
+      // Setting Up Web3 Connection
+      const String skinContractAddress = flutterBirdSkinsContractAddress;
+      String rpcUrl = klaytnBaobabProviderUrl;
+
+      _authenticationService = AuthenticationServiceImpl(
+          isInLiff: isInLiff,
+          operatingChain: chainId,
+          onAuthStatusChanged: () async {
+            notifyListeners();
+            authorizeUser();
+          });
+      
+      await (_authenticationService as AuthenticationServiceImpl).initialize(isInLiff);
+      _authorizationService = AuthorizationServiceImpl(contractAddress: skinContractAddress, rpcUrl: rpcUrl);
+      
+    } catch (e) {
+      lastError = 'Initialization error: $e';
+      printDebugInfo('Initialization error: $e');
+      notifyListeners();
+    }
   }
 
-  requestAuthentication({WalletProvider? walletProvider}) {
-    _authenticationService.requestAuthentication(walletProvider: walletProvider);
+  Future<void> verifySignature() async {
+    try {
+      bool result = await (_authenticationService as AuthenticationServiceImpl).verifySignature();
+      if (result) {
+        await authorizeUser();
+      }
+      notifyListeners();
+    } catch (e) {
+      lastError = 'Signature verification error: $e';
+      printDebugInfo('Signature verification error: $e');
+      notifyListeners();
+      rethrow;
+    }
   }
 
-  unauthenticate() {
-    _authenticationService.unauthenticate();
-    notifyListeners();
+  Future<void> requestAuthentication({WalletProvider? walletProvider}) async {
+    try {
+      await _authenticationService.requestAuthentication(walletProvider: walletProvider);
+    } catch (e) {
+      lastError = 'Authentication error: $e';
+      printDebugInfo('Authentication error: $e');
+      notifyListeners();
+    }
+  }
+
+  void unauthenticate() {
+    try {
+      _authenticationService.unauthenticate();
+      notifyListeners();
+    } catch (e) {
+      lastError = 'Unauthentication error: $e';
+      printDebugInfo('Unauthentication error: $e');
+      notifyListeners();
+    }
   }
 
   /// Loads a users owned skins
-  authorizeUser({bool forceReload = false}) async {
-    // Reload skins only if address changed
-    if (!_loadingSkins && (forceReload || skinOwnerAddress != authenticatedAccount?.address)) {
-      _loadingSkins = true;
-      await _authorizationService.authorizeUser(authenticatedAccount?.address, onSkinsUpdated: (skins) {
-        skins?.sort(
-          (a, b) => a.tokenId.compareTo(b.tokenId),
-        );
-        this.skins = skins;
+  Future<void> authorizeUser({bool forceReload = false}) async {
+    try {
+      // Reload skins only if address changed
+      if (!_loadingSkins && (forceReload || skinOwnerAddress != authenticatedAccount?.address)) {
+        _loadingSkins = true;
+        await _authorizationService.authorizeUser(authenticatedAccount?.address, onSkinsUpdated: (skins) {
+          skins?.sort(
+            (a, b) => a.tokenId.compareTo(b.tokenId),
+          );
+          this.skins = skins;
+          notifyListeners();
+        });
+        skinOwnerAddress = authenticatedAccount?.address;
+        _loadingSkins = false;
         notifyListeners();
-      });
-      skinOwnerAddress = authenticatedAccount?.address;
-      _loadingSkins = false;
+      }
+    } catch (e) {
+      lastError = 'Authorization error: $e';
+      printDebugInfo('Authorization error: $e');
       notifyListeners();
     }
+  }
+
+  void printDebugInfo(String message) {
+    print('FlutterBirdController: $message');
+    print('isAuthenticated: $isAuthenticated');
+    print('isOnOperatingChain: $isOnOperatingChain');
+    print('authenticatedAccount: ${authenticatedAccount?.address}');
+    print('availableWallets: ${availableWallets.length}');
+    print('webQrData: $webQrData');
   }
 }

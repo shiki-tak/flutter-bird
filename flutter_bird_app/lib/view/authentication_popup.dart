@@ -7,7 +7,8 @@ import '../controller/flutter_bird_controller.dart';
 import '../model/wallet_provider.dart';
 
 class AuthenticationPopup extends StatefulWidget {
-  const AuthenticationPopup({Key? key}) : super(key: key);
+  final bool isInLiff;
+  const AuthenticationPopup({Key? key, required this.isInLiff}) : super(key: key);
 
   @override
   State<AuthenticationPopup> createState() => _AuthenticationPopupState();
@@ -15,82 +16,129 @@ class AuthenticationPopup extends StatefulWidget {
 
 class _AuthenticationPopupState extends State<AuthenticationPopup> {
   String? uri;
+  String? errorMessage;
 
   @override
   void initState() {
     super.initState();
   }
 
+  void _setErrorMessage(String message) {
+    setState(() {
+      errorMessage = message;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Consumer<FlutterBirdController>(
-      builder: (context, web3Service, child) => Scaffold(
+      builder: (context, flutterBirdController, child) => Scaffold(
         backgroundColor: Colors.transparent,
         body: Stack(
           children: [
             _buildBackground(),
-            _buildBody(web3Service),
+            _buildBody(flutterBirdController),
+            if (errorMessage != null) _buildErrorOverlay(),
           ],
         ),
       ),
     );
   }
 
-  _buildBody(FlutterBirdController flutterBirdController) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const SizedBox(
-            height: 80,
+  Widget _buildErrorOverlay() {
+    return Container(
+      color: Colors.black.withOpacity(0.8),
+      child: Center(
+        child: Container(
+          padding: const EdgeInsets.all(20),
+          margin: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(10),
           ),
-          Expanded(
-            flex: (flutterBirdController.isAuthenticated || kIsWeb) ? 0 : 1,
-            child: Container(
-              constraints: const BoxConstraints(
-                minHeight: 240,
-                maxWidth: 340,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text('Error', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 10),
+              Text(errorMessage ?? '', style: const TextStyle(fontSize: 16)),
+              const SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: () {
+                  setState(() {
+                    errorMessage = null;
+                  });
+                },
+                child: const Text('Close'),
               ),
-              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24)),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
-                child: flutterBirdController.isAuthenticated
-                    ? _buildAuthenticatedView(flutterBirdController)
-                    : _buildUnauthenticatedView(flutterBirdController),
-              ),
-            ),
+            ],
           ),
-          const SizedBox(
-            height: 80,
-          ),
-        ],
+        ),
       ),
     );
   }
 
-  _buildUnauthenticatedView(FlutterBirdController flutterBirdController) {
+  Widget _buildBody(FlutterBirdController flutterBirdController) {
+    return Center(
+      child: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 80),
+          child: Container(
+            constraints: BoxConstraints(
+              minHeight: 240,
+              maxWidth: 340,
+              maxHeight: MediaQuery.of(context).size.height - 160,
+            ),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(24),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
+              child: flutterBirdController.isAuthenticated
+                ? _buildAuthenticatedView(flutterBirdController)
+                : _buildUnauthenticatedView(flutterBirdController),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildUnauthenticatedView(FlutterBirdController flutterBirdController) {
     if (kIsWeb && flutterBirdController.webQrData == null) {
       // Generates QR Data
       flutterBirdController.requestAuthentication();
     }
     return Column(
+      mainAxisSize: MainAxisSize.min,
       children: [
         _buildAuthenticationStatusView(flutterBirdController),
-        if (!kIsWeb) _buildWalletSelector(flutterBirdController),
-        if (flutterBirdController.webQrData != null && kIsWeb) _buildQRView(flutterBirdController.webQrData!)
+        if (!flutterBirdController.isConnected)
+          if (!kIsWeb && !widget.isInLiff)
+            Flexible(
+              child: _buildWalletSelector(flutterBirdController),
+            ),
+        if (!flutterBirdController.isConnected)
+          if (kIsWeb && widget.isInLiff)
+            Flexible(
+              child: _buildWalletSelector(flutterBirdController),
+            ),
+        if (flutterBirdController.webQrData != null && kIsWeb && !widget.isInLiff)
+          _buildQRView(flutterBirdController.webQrData!)
       ],
     );
   }
 
-  _buildAuthenticatedView(FlutterBirdController flutterBirdController) => Column(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          _buildAuthenticationStatusView(flutterBirdController),
-          _buildConnectButton(flutterBirdController),
-        ],
-      );
+  Widget _buildAuthenticatedView(FlutterBirdController flutterBirdController) => Column(
+    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    children: [
+      _buildAuthenticationStatusView(flutterBirdController),
+      _buildConnectButton(flutterBirdController),
+    ],
+  );
 
-  _buildAuthenticationStatusView(FlutterBirdController flutterBirdController) {
+  Widget _buildAuthenticationStatusView(FlutterBirdController flutterBirdController) {
     String statusText = 'Not Authenticated';
     if (flutterBirdController.isAuthenticated) {
       statusText = flutterBirdController.isOnOperatingChain ? 'Authenticated' : '\nAuthenticated on wrong chain';
@@ -102,89 +150,113 @@ class _AuthenticationPopupState extends State<AuthenticationPopup> {
           style: Theme.of(context).textTheme.titleLarge,
         ),
         if (!flutterBirdController.isOnOperatingChain)
-          const SizedBox(
-            height: 16,
-          ),
+          const SizedBox(height: 16,),
         if (!flutterBirdController.isOnOperatingChain)
           Text(
             'Connect a wallet on ${flutterBirdController.operatingChainName}',
             style: Theme.of(context).textTheme.bodyLarge,
           ),
         if (flutterBirdController.isAuthenticated)
-          const SizedBox(
-            height: 16,
-          ),
+          const SizedBox(height: 16,),
         if (flutterBirdController.isAuthenticated)
           Text(
             'Wallet address:\n' + (flutterBirdController.authenticatedAccount?.address ?? ''),
             style: Theme.of(context).textTheme.bodyLarge,
-          )
+          ),
+        if (flutterBirdController.isConnected && !flutterBirdController.isAuthenticated)
+          Column(
+            children: [
+              const SizedBox(height: 16),
+              Text(
+                "Please sign to authenticate your wallet.",
+                style: Theme.of(context).textTheme.bodyLarge,
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 8),
+              ElevatedButton(
+                onPressed: () async {
+                  try {
+                    await flutterBirdController.verifySignature();
+                  } catch (e) {
+                    _setErrorMessage('Error during signature verification: $e');
+                  }
+                },
+                child: Text('Sign Message'),
+              ),
+            ],
+          ),
       ],
     );
   }
 
-  _buildConnectButton(FlutterBirdController web3Service) {
+  Widget _buildConnectButton(FlutterBirdController flutterBirdController) {
     return ElevatedButton(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: web3Service.isAuthenticated ? Colors.redAccent : Colors.green,
-        ),
-        onPressed: () async {
-          if (web3Service.isAuthenticated) {
-            web3Service.unauthenticate();
-          } else {
-            web3Service.requestAuthentication();
-          }
-        },
-        child: SizedBox(
-          height: 40,
-          child: Center(
-            child: Text(
-              web3Service.isAuthenticated ? 'Disconnect' : 'Connect',
-              style: Theme.of(context).textTheme.labelLarge?.copyWith(color: Colors.white),
-            ),
-          ),
-        ));
-  }
-
-  _buildWalletSelector(FlutterBirdController flutterBirdController) {
-    return Expanded(
-      child: ListView.separated(
-        shrinkWrap: true,
-        itemCount: flutterBirdController.availableWallets.length,
-        itemBuilder: (BuildContext context, int index) {
-          WalletProvider wallet = flutterBirdController.availableWallets[index];
-          return ListTile(
-              title: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Expanded(
-                    child: Text(
-                      wallet.name,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  SizedBox(
-                    height: 40,
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(10),
-                      child: wallet.imageUrl == null ? Container() : Image.network(wallet.imageUrl!),
-                    ),
-                  ),
-                ],
-              ),
-              trailing: const Icon(Icons.chevron_right_rounded),
-              onTap: () {
-                flutterBirdController.requestAuthentication(walletProvider: wallet);
-              });
-        },
-        separatorBuilder: (BuildContext context, int index) => const SizedBox(
-          height: 4,
-        ),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: flutterBirdController.isAuthenticated ? Colors.redAccent : Colors.green,
       ),
+      onPressed: () async {
+        if (flutterBirdController.isAuthenticated) {
+          flutterBirdController.unauthenticate();
+        } else {
+          flutterBirdController.requestAuthentication();
+        }
+      },
+      child: SizedBox(
+        height: 40,
+        child: Center(
+          child: Text(
+            flutterBirdController.isAuthenticated ? 'Disconnect' : 'Connect',
+            style: Theme.of(context).textTheme.labelLarge?.copyWith(color: Colors.white),
+          ),
+        ),
+      )
     );
   }
 
-  _buildQRView(String data) {
+  Widget _buildWalletSelector(FlutterBirdController flutterBirdController) {
+    if (flutterBirdController.availableWallets.isEmpty) {
+      return Center(child: CircularProgressIndicator());
+    }
+    return ListView.separated(
+      shrinkWrap: true,
+      physics: ClampingScrollPhysics(),
+      itemCount: flutterBirdController.availableWallets.length,
+      itemBuilder: (BuildContext context, int index) {
+        WalletProvider wallet = flutterBirdController.availableWallets[index];
+        return ListTile(
+          title: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Text(
+                  wallet.name,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              SizedBox(
+                height: 40,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(10),
+                  child: wallet.imageUrl.sm == '' ? Container() : Image.network(wallet.imageUrl.sm),
+                ),
+              ),
+            ],
+          ),
+          trailing: const Icon(Icons.chevron_right_rounded),
+          onTap: () {
+            try {
+              flutterBirdController.requestAuthentication(walletProvider: wallet);
+            } catch (e) {
+              _setErrorMessage('Error connecting to wallet: $e');
+            }
+          },
+        );
+      },
+      separatorBuilder: (BuildContext context, int index) => const SizedBox(height: 4),
+    );
+  }
+
+  Widget _buildQRView(String data) {
     return QrImageView(
       data: data,
       version: QrVersions.auto,
@@ -192,13 +264,14 @@ class _AuthenticationPopupState extends State<AuthenticationPopup> {
     );
   }
 
-  _buildBackground() => Positioned.fill(
-          child: GestureDetector(
-        onTap: () {
-          Navigator.of(context).pop();
-        },
-        child: Container(
-          color: Colors.black54,
-        ),
-      ));
+  Widget _buildBackground() => Positioned.fill(
+    child: GestureDetector(
+      onTap: () {
+        Navigator.of(context).pop();
+      },
+      child: Container(
+        color: Colors.black54,
+      ),
+    ),
+  );
 }

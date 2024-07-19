@@ -10,6 +10,9 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  package_info_plus: ^5.0.1 
+  shared_preferences_android: ^2.0.0
+  url_launcher_android: ^6.0.0
   flutter_dotenv: ^5.1.0
 
   web3dart: 2.7.3
@@ -20,6 +23,7 @@ dependencies:
   provider: 6.0.3
   qr_flutter: 4.1.0
   http: 1.2.0
+  flutter_line_liff: ^0.0.3
 
 dev_dependencies:
   flutter_launcher_icons: 0.13.1
@@ -43,7 +47,7 @@ flutter:
   assets:
     - images/
     - assets/
-    - .env
+    - env
   fonts:
     - family: flappy
       fonts:

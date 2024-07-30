@@ -5,6 +5,7 @@ import 'package:qr_flutter/qr_flutter.dart';
 
 import '../controller/flutter_bird_controller.dart';
 import '../model/wallet_provider.dart';
+import '../utils.dart';
 
 class AuthenticationPopup extends StatefulWidget {
   final bool isInLiff;
@@ -106,7 +107,7 @@ class _AuthenticationPopupState extends State<AuthenticationPopup> {
   }
 
   Widget _buildUnauthenticatedView(FlutterBirdController flutterBirdController) {
-    if (kIsWeb && flutterBirdController.webQrData == null) {
+    if ((kIsWeb && flutterBirdController.webQrData == null) && !isMobileWeb()) {
       // Generates QR Data
       flutterBirdController.requestAuthentication();
     }
@@ -124,6 +125,11 @@ class _AuthenticationPopupState extends State<AuthenticationPopup> {
             Flexible(
               child: _buildWalletSelector(flutterBirdController),
             ),
+        if (!flutterBirdController.isConnected)
+          if (isMobileWeb())
+            Flexible(
+              child: _buildWalletSelector(flutterBirdController),
+            ),            
         if (flutterBirdController.webQrData != null && kIsWeb && !widget.isInLiff)
           _buildQRView(flutterBirdController.webQrData!)
       ],

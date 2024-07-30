@@ -13,6 +13,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 import '../model/account.dart';
 import '../model/wallet_provider.dart';
+import '../utils.dart';
 
 /// Manages the authentication process and communication with crypto wallets
 abstract class AuthenticationService {
@@ -91,7 +92,7 @@ class AuthenticationServiceImpl implements AuthenticationService {
     await _createConnector();
     await _clearSessions();
 
-    if (!kIsWeb || isInLiff) {
+    if (!kIsWeb || isInLiff || isMobileWeb()) {
       await _loadWallets();
     } else {
       print('AuthenticationServiceImpl: Skipping wallet loading for Web');
@@ -153,10 +154,13 @@ class AuthenticationServiceImpl implements AuthenticationService {
 
         Uri? uri = resp.uri;
         if (uri != null) {
-          // Web
-          if (kIsWeb && !isInLiff) {
+          // Desktop Web
+          if (kIsWeb && !isInLiff && !isMobileWeb()) {
             webQrData = uri.toString();
             onAuthStatusChanged();
+          // Mobile Web
+          } else if (kIsWeb && isMobileWeb()) {
+            _launchWallet(wallet: walletProvider, uri: uri.toString());
           // LIFF
           } else if(kIsWeb && isInLiff) {
             _launchWallet(wallet: walletProvider, uri: uri.toString());
@@ -239,6 +243,9 @@ class AuthenticationServiceImpl implements AuthenticationService {
       _launchWallet(wallet: walletProvider, uri: 'wc:${currentSession!.topic}@2?relay-protocol=irn&symKey=${currentSession!.relay.protocol}');
       // LIFF	
     } else if(isInLiff) {	
+      await Future.delayed(const Duration(seconds: 1));	
+      _launchWallet(wallet: walletProvider, uri: 'wc:${currentSession!.topic}@2?relay-protocol=irn&symKey=${currentSession!.relay.protocol}');
+    } else if (isMobileWeb()) {
       await Future.delayed(const Duration(seconds: 1));	
       _launchWallet(wallet: walletProvider, uri: 'wc:${currentSession!.topic}@2?relay-protocol=irn&symKey=${currentSession!.relay.protocol}');
     }
